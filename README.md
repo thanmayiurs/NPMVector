@@ -127,13 +127,22 @@ The dashboard is available at `http://127.0.0.1:5173`.
 
 ## 8. Environment Variables
 
-Create `backend/.env` locally. Never commit this file or expose its password.
+Copy `backend/.env.example` to `backend/.env` locally. Never commit the local file or expose its password.
 
 ```env
 DATABASE_URL=postgresql+psycopg2://postgres:YOUR_PASSWORD@localhost:5432/npmvector
+CORS_ORIGINS=http://127.0.0.1:5173,http://localhost:5173
 ```
 
-The application loads `DATABASE_URL` through `python-dotenv`. Replace `YOUR_PASSWORD` only in your local environment.
+The backend loads these values through `python-dotenv`. For production, set `DATABASE_URL` to the managed PostgreSQL connection string and `CORS_ORIGINS` to the deployed frontend URL. Do not commit either production value.
+
+For the frontend, copy `frontend/.env.example` to `frontend/.env.local` for local development:
+
+```env
+VITE_API_URL=http://127.0.0.1:8000
+```
+
+Set `VITE_API_URL` to the deployed FastAPI URL in the frontend hosting provider's environment settings.
 
 ## 9. API Overview
 
@@ -167,7 +176,23 @@ npm run build
 
 The test suite covers release detection, relevance scoring, threat scoring, package metadata analysis, dependency comparison, API responses, and failure cases.
 
-## 11. GitHub Safety
+## 11. Deployment
+
+A practical production layout is:
+
+```text
+React frontend (Vercel)
+  |
+  v
+FastAPI backend (Render or Railway)
+  |
+  v
+Managed PostgreSQL
+```
+
+Configure `DATABASE_URL` and `CORS_ORIGINS` on the backend host, and `VITE_API_URL` on the frontend host. Deploy only after the local tests and frontend build pass. Verify `/health`, `/docs`, the dashboard, and a package investigation page after deployment.
+
+## 12. GitHub Safety
 
 Before publishing the repository, confirm that `.env`, `venv/`, `.venv/`, `node_modules/`, and `dist/` are ignored. PostgreSQL credentials must never be committed. Initialize Git and create the first commit only after reviewing the staged file list:
 

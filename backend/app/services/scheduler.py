@@ -1,3 +1,5 @@
+import logging
+
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from app.database.database import SessionLocal
@@ -7,6 +9,7 @@ from app.services.monitor_service import check_package
 
 
 scheduler = BackgroundScheduler()
+logger = logging.getLogger("npmvector.scheduler")
 
 
 def monitor_all_packages():
@@ -19,20 +22,14 @@ def monitor_all_packages():
             Package.is_monitored == True
         ).all()
 
-        print(
-            f"\n[SCHEDULER] Checking "
-            f"{len(packages)} monitored package(s)..."
-        )
+        logger.info("Checking %s monitored package(s)...", len(packages))
 
         for package in packages:
 
             check_package(package.name)
 
-    except Exception as e:
-
-        print(
-            f"[SCHEDULER] Error: {e}"
-        )
+    except Exception:
+        logger.exception("Scheduler monitoring cycle failed")
 
     finally:
 
@@ -51,6 +48,4 @@ def start_scheduler():
 
     scheduler.start()
 
-    print(
-        "[SCHEDULER] NPM monitoring started."
-    )
+    logger.info("NPM monitoring started.")

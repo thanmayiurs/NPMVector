@@ -1,10 +1,13 @@
 from datetime import datetime
+import logging
 
 from app.database.database import SessionLocal
 from app.models.package import Package
 from app.models.release import Release
 
 from app.services.relevance_engine import calculate_relevance_score
+
+logger = logging.getLogger("npmvector.relevance")
 
 
 def calculate_package_relevance(package_name: str):
@@ -19,7 +22,7 @@ def calculate_package_relevance(package_name: str):
         ).first()
 
         if package is None:
-            print(f"[RELEVANCE] Package not found: {package_name}")
+            logger.warning("Package not found: %s", package_name)
             return
 
         # --------------------------------
@@ -66,10 +69,11 @@ def calculate_package_relevance(package_name: str):
 
         db.commit()
 
-        print(
-            f"[RELEVANCE] {package_name} "
-            f"Score={score} "
-            f"Priority={priority}"
+        logger.info(
+            "%s Score=%s Priority=%s",
+            package_name,
+            score,
+            priority,
         )
 
         return {
@@ -78,14 +82,11 @@ def calculate_package_relevance(package_name: str):
             "priority": priority
         }
 
-    except Exception as e:
+    except Exception:
 
         db.rollback()
 
-        print(
-            f"[RELEVANCE] Error for "
-            f"{package_name}: {e}"
-        )
+        logger.exception("Error calculating relevance for %s", package_name)
 
     finally:
 
